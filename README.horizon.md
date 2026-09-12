@@ -43,3 +43,7 @@ Desktop Discord integration, filesystem watchers, external process helpers and
 the external autosplitter are unavailable on Horizon.
 Use the pinned dependency set from Celeste-Switch to keep the loader, framework,
 and runtime interfaces compatible.
+
+The source-build helpers' recursive source-fetch controls can be run with
+`python3 tests/horizon/test_sources.py`; these tests create only temporary,
+original Git fixtures and do not require a console or game files.
