@@ -1,4 +1,4 @@
-
+﻿
 using Monocle;
 using System;
 using System.Buffers;
@@ -88,6 +88,13 @@ namespace Celeste.Mod {
 
         internal static void Init() {
             Trace.Assert(!_IsInitialized);
+
+            // This runtime has no shared memory-mapped-file API. The optional
+            // external timer bridge must not prevent the game/mod loader booting.
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Create("LIBNX"))) {
+                Logger.Info("autosplitter", "External shared-memory autosplitter is unavailable on Horizon.");
+                return;
+            }
 
             const int PAGE_SIZE = 4096;
 
