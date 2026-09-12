@@ -1,3 +1,5 @@
+Horizon build and integration: [README.horizon.md](README.horizon.md).
+
 # Everest - Celeste Mod Loader / Base API
 
 ### License: MIT

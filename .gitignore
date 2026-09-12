@@ -255,3 +255,8 @@ tmp-olympus/
 
 # JetBrains Rider files
 .idea/
+
+# Horizon source builds
+/artifacts/
+**/__pycache__/
+packages.horizon.lock.json
