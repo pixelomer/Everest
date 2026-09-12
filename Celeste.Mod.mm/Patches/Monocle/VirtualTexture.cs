@@ -108,11 +108,12 @@ namespace Monocle {
                     }
                 }
 
-                if (_Texture_Reloading || !(CoreModule.Settings.LazyLoading || lazyForce))
+                if (_Texture_Reloading || !(CoreModule.Settings.LazyLoading || _Texture_ForceLazyLoad || lazyForce))
                     return Texture_Unsafe;
 
                 // If we're accessing the texture from elsewhere (render), load lazily if required.
                 if (Texture_Unsafe?.IsDisposed ?? true) {
+                    Everest.Events.VirtualTexture.LazyLoad((VirtualTexture) (object) this);
                     _Texture_Requesting = true;
                     Reload();
                 }
@@ -125,6 +126,7 @@ namespace Monocle {
         }
 
         private bool _Texture_Reloading;
+        private bool _Texture_ForceLazyLoad;
         private bool _Texture_Requesting;
         private bool _Texture_UnloadAfterReload;
         private object _Texture_QueuedLoadLock;
@@ -786,7 +788,12 @@ namespace Monocle {
         }
 
         private bool Preload(bool force = false) {
-            if (!CoreModule.Settings.LazyLoading && !force) {
+            // Match the additive lazy-loading events from the upstream FTL rewrite.
+            // Invoke even when global lazy loading is enabled: subscribers also
+            // associate textures with maps. Forced FTL size reads preserve this decision.
+            if (!force)
+                _Texture_ForceLazyLoad = Everest.Events.VirtualTexture.OnShouldForceLazyLoad((VirtualTexture) (object) this);
+            if (!CoreModule.Settings.LazyLoading && !_Texture_ForceLazyLoad && !force) {
                 return false;
             }
 
@@ -877,5 +884,24 @@ namespace Monocle {
         public static void SetFallback(this VirtualTexture self, VirtualTexture fallback)
             => ((patch_VirtualTexture) (object) self).Fallback = fallback;
 
+    }
+}
+
+namespace Celeste.Mod {
+    public static partial class Everest {
+        public static partial class Events {
+            public static class VirtualTexture {
+                public delegate bool ForceLazyLoadHandler(Monocle.VirtualTexture self);
+                public static event ForceLazyLoadHandler ShouldForceLazyLoad;
+
+                internal static bool OnShouldForceLazyLoad(Monocle.VirtualTexture self)
+                    => ShouldForceLazyLoad.InvokeWhileFalse(self);
+
+                public delegate void LazyLoadHandler(Monocle.VirtualTexture self);
+                public static event LazyLoadHandler OnLazyLoad;
+                internal static void LazyLoad(Monocle.VirtualTexture tex)
+                    => OnLazyLoad?.Invoke(tex);
+            }
+        }
     }
 }
